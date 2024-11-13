@@ -21,7 +21,7 @@ async def check_tickets():
             data = response.json()
 
             for date, availability in data["availabilityByDate"].items():
-                if availability["available"] > 1:
+                if availability["available"] > 0:
                     message = f"Ski tickets are available for {date}! Book now: {url}"
                     await send_discord_message(message)
 
