@@ -25,7 +25,7 @@ async def check_tickets():
                     message = f"Ski tickets are available for {date}! Book now: {url}"
                     await send_discord_message(message)
 
-            await asyncio.sleep(3600)  # Check every hour (adjust as needed)
+            await asyncio.sleep(30)  # Check every 30s (adjust as needed)
 
         except requests.exceptions.RequestException as e:
             print(f"Error checking tickets: {e}")
