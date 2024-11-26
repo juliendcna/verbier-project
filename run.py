@@ -1,8 +1,9 @@
-import requests
-import discord
-import asyncio
 import os
+import requests
+import asyncio
+import discord
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -12,6 +13,9 @@ DISCORD_CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
 url = "https://verbier4vallees.ch/en/shop/product/available-dates-times?activity_id=410650"
 
 async def check_tickets():
+    last_check_time = datetime.now()
+    tickets_found_last_hour = False
+
     while True:
         try:
             # Make the request with verify=False to ignore SSL certificate checks
@@ -19,13 +23,27 @@ async def check_tickets():
             response.raise_for_status()  # Raise an exception for bad status codes
 
             data = response.json()
+            tickets_found = False
 
             for date, availability in data["availabilityByDate"].items():
                 if availability["available"] > 0:
+                    tickets_found = True
+                    tickets_found_last_hour = True
                     message = f"Ski tickets are available for {date}! Book now: {url}"
                     await send_discord_message(message)
 
-            await asyncio.sleep(30)  # Check every 30s (adjust as needed)
+            if not tickets_found:
+                print("No tickets found in this check.")
+
+            # Check if an hour has passed
+            if datetime.now() - last_check_time >= timedelta(hours=1):
+                if not tickets_found_last_hour:
+                    await send_discord_message("No tickets found in the last hour.")
+                # Reset the timer and the flag
+                last_check_time = datetime.now()
+                tickets_found_last_hour = False
+
+            await asyncio.sleep(60)  # Check every 60 seconds
 
         except requests.exceptions.RequestException as e:
             print(f"Error checking tickets: {e}")
@@ -44,5 +62,5 @@ async def send_discord_message(message):
 
     await client.start(DISCORD_TOKEN)
 
-if __name__ == "__main__":
-    asyncio.run(check_tickets())
+# Run the check_tickets function
+asyncio.run(check_tickets())
